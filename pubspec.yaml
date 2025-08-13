@@ -1,0 +1,124 @@
+
+# name: AIAPIS_app
+# description: A Flutter app integrating Firebase and Google Maps
+
+# publish_to: "none"
+
+# environment:
+#   sdk: '^3.6.0'
+
+# dependencies:
+#   flutter:
+#     sdk: flutter
+  
+#   # Firebase Core (needed for any Firebase usage)
+#   firebase_core: ^3.14.0
+  
+#   # Firebase Auth (for login/register)
+#   firebase_auth: ^5.6.0
+  
+#   # Firestore (for storing alerts, etc.)
+#   cloud_firestore: ^5.6.9
+  
+#   # Google Maps + Geolocator
+#   google_maps_flutter: ^2.5.0
+#   geolocator: ^13.0.2
+  
+#   # For picking images from camera/gallery
+#   image_picker: ^1.1.2
+
+# dev_dependencies:
+#   flutter_test:
+#     sdk: flutter
+#   # If you want lint rules
+#   flutter_lints: ^5.0.0
+
+# flutter:
+#   uses-material-design: true
+  
+#   # Declare your assets
+#   assets:
+#     - assets/bee.png
+#     - assets/profile_pic.png
+name: AIAPIS
+description: A Flutter app integrating Firebase and Google Maps
+
+publish_to: "none"
+
+environment:
+  sdk: '^3.6.0'
+
+version: 1.0.0+1
+
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  provider: ^6.1.2
+
+   
+  firebase_core: ^2.4.1
+  firebase_auth: ^4.2.5
+  cloud_firestore: ^4.1.0
+  firebase_storage: ^11.0.16           
+  image_picker: ^0.8.7+4
+    
+
+  # Firebase Core (needed for any Firebase usage)
+  
+  
+  # Firebase Auth (for login/register)
+  
+  
+  # Firestore (for storing alerts, etc.)
+  
+  
+  # Google Maps + Geolocator
+  google_maps_flutter: ^2.5.0
+  geolocator: ^13.0.2
+
+  # For picking images from camera/gallery
+  
+
+  # **NEW**: camera plugin for real-time scanning
+  camera: ^0.11.1
+
+  # **NEW**: tflite plugin for on-device AI (e.g., bounding boxes)
+  #tflite: ^1.1.2
+
+  # **OPTIONAL** for bar charts in StatisticsPage
+  #charts_flutter_new: ^0.12.0
+  fl_chart: ^0.61.0
+  http: ^1.3.0
+  path_provider: ^2.1.5
+  intl: ^0.20.2
+  shared_preferences: ^2.2.3
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1  
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/bee.png
+    - assets/profile_pic.png
+    - assets/logo.png
+    - assets/avatars/
+    # **If you want TFLite model & labels for scanning**
+    # - assets/bee_model.tflite
+    # - assets/labels.txt
+  
+
+
