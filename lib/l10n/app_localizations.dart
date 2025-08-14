@@ -1,9 +1,9 @@
-// 프로필 관련 추가
-  String get userName;
-  String get selectLocation;
 import 'package:flutter/material.dart';
 
 abstract class AppLocalizations {
+  // 프로필 관련 추가
+  String get userName;
+  String get selectLocation;
   static AppLocalizations? of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
@@ -186,6 +186,12 @@ class _AppLocalizationsDelegate
 }
 
 class AppLocalizationsEn extends AppLocalizations {
+  // 프로필 관련 추가
+  @override
+  String get userName => 'User Name';
+  @override
+  String get selectLocation => 'Select Location';
+
   @override
   String get signIn => 'Sign In';
   @override
@@ -429,6 +435,12 @@ class AppLocalizationsEn extends AppLocalizations {
 }
 
 class AppLocalizationsKo extends AppLocalizations {
+  // 프로필 관련 추가
+  @override
+  String get userName => '사용자 이름';
+  @override
+  String get selectLocation => '위치 선택';
+
   @override
   String get signIn => '로그인';
   @override
