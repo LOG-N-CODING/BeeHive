@@ -1,3 +1,6 @@
+// 프로필 관련 추가
+  String get userName;
+  String get selectLocation;
 import 'package:flutter/material.dart';
 
 abstract class AppLocalizations {
@@ -469,13 +472,13 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get scanPhoto => '사진 스캔';
   @override
-  String get checkForMites => '진드기 검사';
+  String get checkForMites => '응애 감염 확인';
   @override
-  String get todaysDiagnoses => '오늘의 진단';
+  String get todaysDiagnoses => '오늘의 검사 결과';
   @override
-  String get images => '이미지';
+  String get images => '총 검사수';
   @override
-  String get infected => '감염됨';
+  String get infected => '감염수';
 
   @override
   String get scan => '스캔';
@@ -497,7 +500,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get saveResult => '결과 저장';
 
   @override
-  String get map => '지도';
+  String get map => '양봉장 표기 지도';
   @override
   String get beehiveLocations => '벌집 위치';
   @override
@@ -537,9 +540,9 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get scanImages => '이미지를 스캔해보세요!';
   @override
-  String get mitesDetected => 'Mites Detected';
+  String get mitesDetected => '응애에 감염됨';
   @override
-  String get noMitesDetected => 'No Mites Detected';
+  String get noMitesDetected => '감염되지 않음';
   @override
   String get minutesAgo => '분 전';
   @override
@@ -611,7 +614,7 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get language => '언어';
   @override
-  String get selectLanguage => '언어 선택';
+  String get selectLanguage => '언어선택';
   @override
   String get english => 'English';
   @override
@@ -631,7 +634,7 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get logout => '로그아웃';
   @override
-  String get profile => '프로필';
+  String get profile => '내 프로필';
   @override
   String get editProfile => '프로필 편집';
 
