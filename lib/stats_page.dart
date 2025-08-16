@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'l10n/app_localizations.dart';
 
@@ -84,13 +85,26 @@ class _StatisticsPageState extends State<StatisticsPage>
   }
 
   Future<void> _fetchStatsData() async {
-    print("📊 전체 통계 데이터 가져오기 시작: $_selectedPeriod");
+    print("📊 내 통계 데이터 가져오기 시작: $_selectedPeriod");
 
     setState(() {
       _isLoading = true;
     });
 
     try {
+      // 현재 로그인된 사용자 확인
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        print("❌ 로그인된 사용자가 없습니다");
+        setState(() {
+          _data = [];
+          _isLoading = false;
+        });
+        return;
+      }
+
+      print("👤 현재 사용자: ${currentUser.uid}");
+
       // 기간 계산
       DateTime startDate;
       DateTime endDate = DateTime.now();
@@ -115,23 +129,25 @@ class _StatisticsPageState extends State<StatisticsPage>
       print(
           "🔍 쿼리 기간: ${DateFormat('yyyy-MM-dd').format(startDate)} ~ ${DateFormat('yyyy-MM-dd').format(endDate)}");
 
-      // stats 컬렉션에서 데이터 가져오기 (인덱스 오류 방지를 위해 단순 쿼리 사용)
-      QuerySnapshot snapshot =
-          await FirebaseFirestore.instance.collection('stats').get();
+      // 내 diagnoses 데이터만 가져오기
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('diagnoses')
+          .where('userId', isEqualTo: currentUser.uid)
+          .get();
 
-      print("📋 가져온 stats 문서 수: ${snapshot.docs.length}");
+      print("📋 가져온 내 진단 문서 수: ${snapshot.docs.length}");
 
-      // 기간 내 데이터만 필터링
+      // 기간 내 데이터만 필터링 (diagnoses 컬렉션은 timestamp 필드 사용)
       final filteredDocs = snapshot.docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        final day = data['day'] as String?;
-        if (day != null) {
+        final timestamp = data['timestamp'];
+        if (timestamp != null && timestamp is Timestamp) {
           try {
-            final date = DateTime.parse(day);
+            final date = timestamp.toDate();
             return date.isAfter(startDate.subtract(const Duration(days: 1))) &&
                 date.isBefore(endDate.add(const Duration(days: 1)));
           } catch (e) {
-            print("날짜 파싱 오류: $day");
+            print("타임스탬프 파싱 오류: $timestamp");
             return false;
           }
         }
@@ -147,20 +163,24 @@ class _StatisticsPageState extends State<StatisticsPage>
         // 최근 7일간의 데이터를 날짜별로 정리
         Map<String, int> dailyDetections = {};
 
-        // stats 데이터에서 감지 수 추출
+        // diagnoses 데이터에서 감지 수 추출
         for (var doc in filteredDocs) {
           final data = doc.data() as Map<String, dynamic>;
-          final day = data['day'] as String?;
-          final detections = data['detections'] as int? ?? 0;
+          final timestamp = data['timestamp'];
+          final infectionStr =
+              data['infection']?.toString().toLowerCase() ?? 'unknown';
+          final isDetected =
+              (infectionStr == 'yes' || infectionStr == 'mites detected');
 
-          if (day != null) {
+          if (timestamp != null && timestamp is Timestamp) {
             try {
-              final date = DateTime.parse(day);
+              final date = timestamp.toDate();
               final dayKey = DateFormat('E').format(date); // Mon, Tue, Wed...
-              dailyDetections[dayKey] =
-                  (dailyDetections[dayKey] ?? 0) + detections;
+              if (isDetected) {
+                dailyDetections[dayKey] = (dailyDetections[dayKey] ?? 0) + 1;
+              }
             } catch (e) {
-              print("날짜 파싱 오류: $day");
+              print("타임스탬프 파싱 오류: $timestamp");
             }
           }
         }
@@ -183,20 +203,24 @@ class _StatisticsPageState extends State<StatisticsPage>
         // 월간 또는 커스텀 기간
         Map<String, int> dailyDetections = {};
 
-        // stats 데이터에서 감지 수 추출
+        // diagnoses 데이터에서 감지 수 추출
         for (var doc in filteredDocs) {
           final data = doc.data() as Map<String, dynamic>;
-          final day = data['day'] as String?;
-          final detections = data['detections'] as int? ?? 0;
+          final timestamp = data['timestamp'];
+          final infectionStr =
+              data['infection']?.toString().toLowerCase() ?? 'unknown';
+          final isDetected =
+              (infectionStr == 'yes' || infectionStr == 'mites detected');
 
-          if (day != null) {
+          if (timestamp != null && timestamp is Timestamp) {
             try {
-              final date = DateTime.parse(day);
+              final date = timestamp.toDate();
               final dayKey = DateFormat('MM/dd').format(date);
-              dailyDetections[dayKey] =
-                  (dailyDetections[dayKey] ?? 0) + detections;
+              if (isDetected) {
+                dailyDetections[dayKey] = (dailyDetections[dayKey] ?? 0) + 1;
+              }
             } catch (e) {
-              print("날짜 파싱 오류: $day");
+              print("타임스탬프 파싱 오류: $timestamp");
             }
           }
         }
@@ -264,50 +288,80 @@ class _StatisticsPageState extends State<StatisticsPage>
           ],
         ),
       ),
-      body: Column(
-        children: [
-          // 커스텀 기간 선택 버튼
-          if (_selectedPeriod == StatsPeriod.custom)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.all(16),
-              child: ElevatedButton.icon(
-                onPressed: _selectCustomDateRange,
-                icon: const Icon(Icons.date_range),
-                label: Text(
-                  _customDateRange != null
-                      ? '${DateFormat('MM/dd').format(_customDateRange!.start)} - ${DateFormat('MM/dd').format(_customDateRange!.end)}'
-                      : AppLocalizations.of(context)?.selectPeriod ?? '기간 선택',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: themeBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
+      body: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, userSnapshot) {
+          final currentUser = userSnapshot.data;
 
-          // 로딩 또는 데이터 표시
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : PageView(
-                    controller: _pageController,
-                    onPageChanged: (index) {
-                      _tabController.animateTo(index);
-                      _onPeriodChanged(StatsPeriod.values[index]);
-                    },
-                    children: [
-                      _buildStatsView(themeYellow, themeBlue),
-                      _buildStatsView(themeYellow, themeBlue),
-                      _buildStatsView(themeYellow, themeBlue),
-                    ],
+          // 로그인하지 않은 경우
+          if (currentUser == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.login, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppLocalizations.of(context)?.loginRequired ?? '로그인이 필요합니다',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
                   ),
-          ),
-        ],
+                  const SizedBox(height: 8),
+                  Text(
+                    AppLocalizations.of(context)?.scanImages ?? '이미지를 스캔해보세요!',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              // 커스텀 기간 선택 버튼
+              if (_selectedPeriod == StatsPeriod.custom)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.all(16),
+                  child: ElevatedButton.icon(
+                    onPressed: _selectCustomDateRange,
+                    icon: const Icon(Icons.date_range),
+                    label: Text(
+                      _customDateRange != null
+                          ? '${DateFormat('MM/dd').format(_customDateRange!.start)} - ${DateFormat('MM/dd').format(_customDateRange!.end)}'
+                          : AppLocalizations.of(context)?.selectPeriod ??
+                              '기간 선택',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: themeBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // 로딩 또는 데이터 표시
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : PageView(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          _tabController.animateTo(index);
+                          _onPeriodChanged(StatsPeriod.values[index]);
+                        },
+                        children: [
+                          _buildStatsView(themeYellow, themeBlue),
+                          _buildStatsView(themeYellow, themeBlue),
+                          _buildStatsView(themeYellow, themeBlue),
+                        ],
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
